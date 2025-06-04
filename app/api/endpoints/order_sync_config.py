@@ -43,10 +43,10 @@ def create_order_sync_config(
 
     config = OrderSyncConfig(
         name=config_in.name,
-        ms1_cp_meta=config_in.ms1_cp_meta,
-        ms2_group_meta=config_in.ms2_group_meta,
-        ms2_organization_meta=config_in.ms2_organization_meta,
-        ms2_store_meta=config_in.ms2_store_meta,
+        ms1_cp_id=config_in.ms1_cp_id,
+        ms2_group_id=config_in.ms2_group_id,
+        ms2_organization_id=config_in.ms2_organization_id,
+        ms2_store_id=config_in.ms2_store_id,
         start_sync_datetime=config_in.start_sync_datetime,
         description=config_in.description,
         is_active=config_in.is_active,

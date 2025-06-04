@@ -1,43 +1,53 @@
-import { Order, OrderSyncStatus } from '../types/order';
+import { OrderSync, OrderSyncStatus, OrderModificationStatus, OrderSyncResponse } from '../types/order';
 import api from './axios';
 
-const getAuthHeaders = () => {
-    const token = localStorage.getItem('access_token');
-    return {
-        headers: {
-            Authorization: `Bearer ${token}`
-        }
-    };
-};
-
 export const orderSyncApi = {
-    getOrders: async (): Promise<Order[]> => {
-        const response = await api.get('/api/order-sync/orders', getAuthHeaders());
-        console.log(response);
+    getOrders: async (
+        skip: number = 0,
+        limit: number = 10,
+        syncStatus?: OrderSyncStatus,
+        modificationStatus?: OrderModificationStatus,
+        configId?: number,
+        createdAfter?: string,
+        createdBefore?: string,
+        search?: string
+    ): Promise<OrderSyncResponse> => {
+        const params = new URLSearchParams();
+        params.append('skip', skip.toString());
+        params.append('limit', limit.toString());
+        if (syncStatus) params.append('sync_status', syncStatus);
+        if (modificationStatus) params.append('modification_status', modificationStatus);
+        if (configId) params.append('config_id', configId.toString());
+        if (createdAfter) params.append('created_after', createdAfter);
+        if (createdBefore) params.append('created_before', createdBefore);
+        if (search) params.append('search', search);
+
+        const response = await api.get(`/order-sync/orders?${params.toString()}`);
         return response.data;
     },
 
-    syncOrder: async (orderId: string): Promise<{ message: string }> => {
-        const response = await api.post(`/api/order-sync/orders/${orderId}/sync`, {}, getAuthHeaders());
+    getOrder: async (orderId: number): Promise<OrderSync> => {
+        const response = await api.get(`/order-sync/orders/${orderId}`);
         return response.data;
     },
 
-    updateOrderStatus: async (orderId: string, status: OrderSyncStatus): Promise<{ message: string }> => {
-        const response = await api.post(
-            `/api/order-sync/orders/${orderId}/status`, 
-            { status }, 
-            getAuthHeaders()
-        );
+    resyncOrder: async (orderId: number): Promise<{ message: string; order: OrderSync }> => {
+        const response = await api.post(`/order-sync/orders/${orderId}/resync`);
         return response.data;
     },
 
-    syncAllPending: async (): Promise<{ message: string }> => {
-        const response = await api.post('/api/order-sync/orders/sync-all-pending', {}, getAuthHeaders());
+    updateStatuses: async (): Promise<{ message: string }> => {
+        const response = await api.post('/order-sync/update-statuses');
         return response.data;
     },
 
-    checkStatuses: async (): Promise<{ message: string }> => {
-        const response = await api.post('/api/order-sync/orders/check-statuses', {}, getAuthHeaders());
+    syncPending: async (): Promise<{ message: string }> => {
+        const response = await api.post('/order-sync/sync-pending');
+        return response.data;
+    },
+
+    syncAll: async (): Promise<{ message: string }> => {
+        const response = await api.post('/order-sync/sync-all');
         return response.data;
     },
 }; 

@@ -20,25 +20,15 @@ interface MoyskladEntity {
   type: string;
 }
 
-// Track both ID and display name
-interface SelectedEntity {
-  id: string;
-  name: string;
-  meta: {
-    href: string;
-    type: string;
-  };
-}
-
 interface OrderSyncConfig {
   id: string;
   name: string;
   is_active: boolean;
   description: string;
-  ms1_cp_meta: string;  // Stored as JSON string
-  ms2_organization_meta: string;  // Stored as JSON string
-  ms2_store_meta: string;  // Stored as JSON string
-  ms2_group_meta: string;  // Stored as JSON string
+  ms1_cp_id: string;
+  ms2_organization_id: string;
+  ms2_store_id: string;
+  ms2_group_id: string;
   start_sync_datetime: string;
 }
 
@@ -46,18 +36,18 @@ interface OrderSyncConfig {
 interface NewConfigForm {
   name: string;
   description: string;
-  active: boolean;
-  ms1_cp_meta: SelectedEntity | null;
-  ms2_organization_meta: SelectedEntity | null;
-  ms2_store_meta: SelectedEntity | null;
-  ms2_group_meta: SelectedEntity | null;
+  is_active: boolean;
+  ms1_cp_id: string | null;
+  ms2_organization_id: string | null;
+  ms2_store_id: string | null;
+  ms2_group_id: string | null;
   start_sync_datetime: string;
 }
 
 interface SearchableSelectProps {
   label: string;
-  value: SelectedEntity | null;
-  onChange: (entity: SelectedEntity | null) => void;
+  value: string | null;
+  onChange: (id: string | null) => void;
   searchQuery: string;
   onSearchChange: (value: string) => void;
   options: MoyskladEntity[];
@@ -130,14 +120,7 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
 
   const handleOptionSelect = useCallback((option: MoyskladEntity) => {
     console.log('Selected option:', option);
-    // Create a simplified object with just what we need
-    const selectedEntity: SelectedEntity = {
-      id: option.id,
-      name: option.name,
-      meta: option.meta
-    };
-    console.log('Created selectedEntity:', selectedEntity);
-    onChange(selectedEntity);
+    onChange(option.id);
     setIsOpen(false);
     onSearchChange('');
   }, [onChange, onSearchChange]);
@@ -158,8 +141,21 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
     );
   }, [isRemoteSearch, searchData, initialData, options, searchQuery, minSearchLength]);
 
-  // Display value is now directly from the value object
-  const displayText = value ? value.name : placeholder;
+  // Update displayText to handle both local and remote search
+  const displayText = useMemo(() => {
+    if (!value) return placeholder;
+    
+    // For remote search, check both searchData and initialData
+    if (isRemoteSearch) {
+      const selectedEntity = searchData.find((opt: MoyskladEntity) => opt.id === value) || 
+                           initialData.find((opt: MoyskladEntity) => opt.id === value);
+      return selectedEntity ? selectedEntity.name : placeholder;
+    }
+    
+    // For local search, check options
+    const selectedEntity = options.find(opt => opt.id === value);
+    return selectedEntity ? selectedEntity.name : placeholder;
+  }, [value, options, searchData, initialData, isRemoteSearch, placeholder]);
 
   return (
     <div className={styles.formGroup}>
@@ -206,7 +202,7 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
                 filteredOptions.map((option: MoyskladEntity) => (
                   <div
                     key={option.id}
-                    className={`${styles.option} ${value?.id === option.id ? styles.selected : ''}`}
+                    className={`${styles.option} ${value === option.id ? styles.selected : ''}`}
                     onClick={() => handleOptionSelect(option)}
                   >
                     {option.name}
@@ -239,11 +235,11 @@ const OrderSyncConfigPage: React.FC = () => {
   const [newConfig, setNewConfig] = useState<NewConfigForm>({
     name: '',
     description: '',
-    active: true,
-    ms1_cp_meta: null,
-    ms2_organization_meta: null,
-    ms2_store_meta: null,
-    ms2_group_meta: null,
+    is_active: true,
+    ms1_cp_id: null,
+    ms2_organization_id: null,
+    ms2_store_id: null,
+    ms2_group_id: null,
     start_sync_datetime: new Date().toISOString().slice(0, 16),
   });
 
@@ -288,39 +284,16 @@ const OrderSyncConfigPage: React.FC = () => {
 
   const createConfigMutation = useMutation({
     mutationFn: async (config: NewConfigForm) => {
-      // Log the full config object for debugging
-      console.log("Full config object:", config);
-      
-      // Helper function to safely extract meta
-      const getMeta = (entity: SelectedEntity | null): { href: string; type: string } | string => {
-        if (!entity) return '';
-        if (typeof entity === 'string') return entity;
-        
-        // Log the entity we're processing
-        console.log('Processing entity for meta:', entity);
-        
-        // Check if meta exists
-        if (!entity.meta) {
-          console.error("Missing meta in entity:", entity);
-          return '';
-        }
-        
-        return entity.meta;
-      };
-      
-      // Convert our internal form with entities to the format the API expects
       const apiConfig = {
         name: config.name,
         description: config.description,
-        active: config.active,
-        ms1_cp_meta: getMeta(config.ms1_cp_meta),
-        ms2_organization_meta: getMeta(config.ms2_organization_meta),
-        ms2_store_meta: getMeta(config.ms2_store_meta),
-        ms2_group_meta: getMeta(config.ms2_group_meta),
+        is_active: config.is_active,
+        ms1_cp_id: config.ms1_cp_id,
+        ms2_organization_id: config.ms2_organization_id,
+        ms2_store_id: config.ms2_store_id,
+        ms2_group_id: config.ms2_group_id,
         start_sync_datetime: config.start_sync_datetime,
       };
-      
-      console.log("Submitting config to API:", apiConfig);
       const response = await api.post('/order-sync-configs', apiConfig);
       return response.data;
     },
@@ -330,11 +303,11 @@ const OrderSyncConfigPage: React.FC = () => {
       setNewConfig({
         name: '',
         description: '',
-        active: true,
-        ms1_cp_meta: null,
-        ms2_organization_meta: null,
-        ms2_store_meta: null,
-        ms2_group_meta: null,
+        is_active: true,
+        ms1_cp_id: null,
+        ms2_organization_id: null,
+        ms2_store_id: null,
+        ms2_group_id: null,
         start_sync_datetime: new Date().toISOString().slice(0, 16),
       });
       setSearchQueries({
@@ -367,45 +340,16 @@ const OrderSyncConfigPage: React.FC = () => {
   };
 
   const handleEditConfig = (config: OrderSyncConfig) => {
-    // Parse meta data from strings
-    const parseMeta = (metaStr: string): { href: string; type: string } => {
-      try {
-        return JSON.parse(metaStr);
-      } catch (e) {
-        console.error('Error parsing meta:', e);
-        return { href: '', type: '' };
-      }
-    };
-
-    // Convert the config to our internal form format
-    const formConfig: NewConfigForm = {
+    setNewConfig({
       name: config.name,
       description: config.description,
-      active: config.is_active,
-      ms1_cp_meta: {
-        id: parseMeta(config.ms1_cp_meta).href.split('/').pop() || '',
-        name: getLabelByHref(parseMeta(config.ms1_cp_meta).href, ms2_organizations),
-        meta: parseMeta(config.ms1_cp_meta)
-      },
-      ms2_organization_meta: {
-        id: parseMeta(config.ms2_organization_meta).href.split('/').pop() || '',
-        name: getLabelByHref(parseMeta(config.ms2_organization_meta).href, ms2_organizations),
-        meta: parseMeta(config.ms2_organization_meta)
-      },
-      ms2_store_meta: {
-        id: parseMeta(config.ms2_store_meta).href.split('/').pop() || '',
-        name: getLabelByHref(parseMeta(config.ms2_store_meta).href, ms2_stores),
-        meta: parseMeta(config.ms2_store_meta)
-      },
-      ms2_group_meta: {
-        id: parseMeta(config.ms2_group_meta).href.split('/').pop() || '',
-        name: getLabelByHref(parseMeta(config.ms2_group_meta).href, ms2_groups),
-        meta: parseMeta(config.ms2_group_meta)
-      },
+      is_active: config.is_active,
+      ms1_cp_id: config.ms1_cp_id,
+      ms2_organization_id: config.ms2_organization_id,
+      ms2_store_id: config.ms2_store_id,
+      ms2_group_id: config.ms2_group_id,
       start_sync_datetime: config.start_sync_datetime,
-    };
-    
-    setNewConfig(formConfig);
+    });
     setIsModalOpen(true);
   };
 
@@ -478,8 +422,8 @@ const OrderSyncConfigPage: React.FC = () => {
                 <label className={styles.checkboxLabel}>
                   <input
                     type="checkbox"
-                    checked={newConfig.active}
-                    onChange={(e) => setNewConfig({ ...newConfig, active: e.target.checked })}
+                    checked={newConfig.is_active}
+                    onChange={(e) => setNewConfig({ ...newConfig, is_active: e.target.checked })}
                     className={styles.checkbox}
                   />
                   Active
@@ -488,16 +432,10 @@ const OrderSyncConfigPage: React.FC = () => {
 
               <SearchableSelect
                 label="MS1 Counterparty"
-                value={newConfig.ms1_cp_meta}
-                onChange={(entity) => {
-                  console.log("Setting MS1 CP entity:", entity);
-                  if (entity) {
-                    console.log("MS1 CP meta.href:", entity.meta?.href);
-                  }
-                  setNewConfig(prev => ({ ...prev, ms1_cp_meta: entity }));
-                }}
+                value={newConfig.ms1_cp_id}
+                onChange={(id: string | null) => setNewConfig(prev => ({ ...prev, ms1_cp_id: id }))}
                 searchQuery={searchQueries.ms1_cp}
-                onSearchChange={(value) => handleSearchChange('ms1_cp', value)}
+                onSearchChange={value => handleSearchChange('ms1_cp', value)}
                 options={[]}
                 placeholder="Select MS1 Counterparty"
                 isRemoteSearch={true}
@@ -507,16 +445,10 @@ const OrderSyncConfigPage: React.FC = () => {
 
               <SearchableSelect
                 label="MS2 Organization"
-                value={newConfig.ms2_organization_meta}
-                onChange={(entity) => {
-                  console.log("Setting MS2 Organization entity:", entity);
-                  if (entity) {
-                    console.log("MS2 Organization meta.href:", entity.meta?.href);
-                  }
-                  setNewConfig(prev => ({ ...prev, ms2_organization_meta: entity }));
-                }}
+                value={newConfig.ms2_organization_id}
+                onChange={(id: string | null) => setNewConfig(prev => ({ ...prev, ms2_organization_id: id }))}
                 searchQuery={searchQueries.ms2_organization}
-                onSearchChange={(value) => handleSearchChange('ms2_organization', value)}
+                onSearchChange={value => handleSearchChange('ms2_organization', value)}
                 options={ms2_organizations}
                 placeholder="Select MS2 Organization"
                 isRemoteSearch={false}
@@ -524,13 +456,10 @@ const OrderSyncConfigPage: React.FC = () => {
 
               <SearchableSelect
                 label="MS2 Store"
-                value={newConfig.ms2_store_meta}
-                onChange={(entity) => {
-                  console.log("Setting MS2 Store:", entity);
-                  setNewConfig(prev => ({ ...prev, ms2_store_meta: entity }));
-                }}
+                value={newConfig.ms2_store_id}
+                onChange={(id: string | null) => setNewConfig(prev => ({ ...prev, ms2_store_id: id }))}
                 searchQuery={searchQueries.ms2_store}
-                onSearchChange={(value) => handleSearchChange('ms2_store', value)}
+                onSearchChange={value => handleSearchChange('ms2_store', value)}
                 options={ms2_stores}
                 placeholder="Select MS2 Store"
                 isRemoteSearch={false}
@@ -538,13 +467,10 @@ const OrderSyncConfigPage: React.FC = () => {
 
               <SearchableSelect
                 label="MS2 Group"
-                value={newConfig.ms2_group_meta}
-                onChange={(entity) => {
-                  console.log("Setting MS2 Group:", entity);
-                  setNewConfig(prev => ({ ...prev, ms2_group_meta: entity }));
-                }}
+                value={newConfig.ms2_group_id}
+                onChange={(id: string | null) => setNewConfig(prev => ({ ...prev, ms2_group_id: id }))}
                 searchQuery={searchQueries.ms2_group}
-                onSearchChange={(value) => handleSearchChange('ms2_group', value)}
+                onSearchChange={value => handleSearchChange('ms2_group', value)}
                 options={ms2_groups}
                 placeholder="Select MS2 Group"
                 isRemoteSearch={false}
@@ -572,10 +498,10 @@ const OrderSyncConfigPage: React.FC = () => {
                 onClick={handleSaveConfig}
                 disabled={
                   !newConfig.name ||
-                  !newConfig.ms1_cp_meta ||
-                  !newConfig.ms2_organization_meta ||
-                  !newConfig.ms2_store_meta ||
-                  !newConfig.ms2_group_meta ||
+                  !newConfig.ms1_cp_id ||
+                  !newConfig.ms2_organization_id ||
+                  !newConfig.ms2_store_id ||
+                  !newConfig.ms2_group_id ||
                   !newConfig.start_sync_datetime
                 }
               >
@@ -616,19 +542,19 @@ const OrderSyncConfigPage: React.FC = () => {
             <div className={styles.configDetails}>
               <div className={styles.detailRow}>
                 <span className={styles.detailLabel}>MS1 CP:</span>
-                <span className={styles.detailValue}>{getLabelByHref(config.ms1_cp_meta, ms2_organizations)}</span>
+                <span className={styles.detailValue}>{getLabelByHref(config.ms1_cp_id, ms2_organizations)}</span>
               </div>
               <div className={styles.detailRow}>
                 <span className={styles.detailLabel}>MS2 Organization:</span>
-                <span className={styles.detailValue}>{getLabelByHref(config.ms2_organization_meta, ms2_organizations)}</span>
+                <span className={styles.detailValue}>{getLabelByHref(config.ms2_organization_id, ms2_organizations)}</span>
               </div>
               <div className={styles.detailRow}>
                 <span className={styles.detailLabel}>MS2 Store:</span>
-                <span className={styles.detailValue}>{getLabelByHref(config.ms2_store_meta, ms2_stores)}</span>
+                <span className={styles.detailValue}>{getLabelByHref(config.ms2_store_id, ms2_stores)}</span>
               </div>
               <div className={styles.detailRow}>
                 <span className={styles.detailLabel}>MS2 Group:</span>
-                <span className={styles.detailValue}>{getLabelByHref(config.ms2_group_meta, ms2_groups)}</span>
+                <span className={styles.detailValue}>{getLabelByHref(config.ms2_group_id, ms2_groups)}</span>
               </div>
               <div className={styles.detailRow}>
                 <span className={styles.detailLabel}>Start Sync:</span>

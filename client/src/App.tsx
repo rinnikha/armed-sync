@@ -12,6 +12,10 @@ import Reports from './pages/Reports';
 import PriceLists from './pages/PriceLists';
 import OrderSyncConfigPage from './pages/OrderSyncConfig';
 import OrderSync from './pages/OrderSync';
+import { ThemeProvider } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
+import { SnackbarProvider } from 'notistack';
+import theme from './theme';
 
 const queryClient = new QueryClient();
 
@@ -23,93 +27,98 @@ const PrivateRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => 
 const App: React.FC = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <Router>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route
-              path="/"
-              element={
-                <PrivateRoute>
-                  <Layout>
-                    <Dashboard />
-                  </Layout>
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/products"
-              element={
-                <PrivateRoute>
-                  <Layout>
-                    <Products />
-                  </Layout>
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/orders"
-              element={
-                <PrivateRoute>
-                  <Layout>
-                    <Orders />
-                  </Layout>
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/sync"
-              element={
-                <PrivateRoute>
-                  <Layout>
-                    <Sync />
-                  </Layout>
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/reports"
-              element={
-                <PrivateRoute>
-                  <Layout>
-                    <Reports />
-                  </Layout>
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/price-lists"
-              element={
-                <PrivateRoute>
-                  <Layout>
-                    <PriceLists />
-                  </Layout>
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/order-sync-config"
-              element={
-                <PrivateRoute>
-                  <Layout>
-                    <OrderSyncConfigPage />
-                  </Layout>
-                </PrivateRoute>
-              }
-            />
-            <Route
-              path="/order-sync"
-              element={
-                <PrivateRoute>
-                  <Layout>
-                    <OrderSync />
-                  </Layout>
-                </PrivateRoute>
-              }
-            />
-          </Routes>
-        </Router>
-      </AuthProvider>
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <SnackbarProvider maxSnack={3}>
+          <AuthProvider>
+            <Router>
+              <Routes>
+                <Route path="/login" element={<Login />} />
+                <Route
+                  path="/"
+                  element={
+                    <PrivateRoute>
+                      <Layout>
+                        <Dashboard />
+                      </Layout>
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/products"
+                  element={
+                    <PrivateRoute>
+                      <Layout>
+                        <Products />
+                      </Layout>
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/orders"
+                  element={
+                    <PrivateRoute>
+                      <Layout>
+                        <Orders />
+                      </Layout>
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/sync"
+                  element={
+                    <PrivateRoute>
+                      <Layout>
+                        <Sync />
+                      </Layout>
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/reports"
+                  element={
+                    <PrivateRoute>
+                      <Layout>
+                        <Reports />
+                      </Layout>
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/price-lists"
+                  element={
+                    <PrivateRoute>
+                      <Layout>
+                        <PriceLists />
+                      </Layout>
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/order-sync-config"
+                  element={
+                    <PrivateRoute>
+                      <Layout>
+                        <OrderSyncConfigPage />
+                      </Layout>
+                    </PrivateRoute>
+                  }
+                />
+                <Route
+                  path="/order-sync"
+                  element={
+                    <PrivateRoute>
+                      <Layout>
+                        <OrderSync />
+                      </Layout>
+                    </PrivateRoute>
+                  }
+                />
+              </Routes>
+            </Router>
+          </AuthProvider>
+        </SnackbarProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 };

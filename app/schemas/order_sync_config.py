@@ -6,10 +6,10 @@ from pydantic import BaseModel
 
 class OrderSyncConfigBase(BaseModel):
     name: Optional[str] = None
-    ms1_cp_meta: Optional[str] = None
-    ms2_organization_meta: Optional[str] = None
-    ms2_group_meta: Optional[str] = None
-    ms2_store_meta: Optional[str] = None
+    ms1_cp_id: Optional[str] = None
+    ms2_organization_id: Optional[str] = None
+    ms2_group_id: Optional[str] = None
+    ms2_store_id: Optional[str] = None
     start_sync_datetime: datetime
     description: Optional[str] = None
     is_active: bool = True

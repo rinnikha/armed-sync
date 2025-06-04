@@ -1,11 +1,13 @@
 import os
 import getpass
+from datetime import datetime
 from typing import Optional, Tuple
 
 from sqlalchemy.orm import Session
 
 from app.core.security import get_password_hash
 from app.db.session import SessionLocal
+from app.models import OrderSyncConfig
 from app.models.role import Role, Permission, RolePermission
 from app.models.user import User, UserRole
 
@@ -119,6 +121,34 @@ def seed_roles(db: Session, permissions: dict) -> dict:
     return created_roles
 
 
+def seed_order_sync_configs(db:Session) -> None:
+    surx_config = OrderSyncConfig(
+        name="Сурхандарья дилер",
+        ms1_cp_id="2aaf3539-c9aa-11ee-0a80-14bd001cd277",
+        ms2_organization_id="ede4cf84-726e-11ef-0a80-13bb002099d9",
+        ms2_group_id="9e1a85f9-da15-11ef-0a80-03cd0002ff84",
+        ms2_store_id="cb75c159-da47-11ef-0a80-06a3000bf6d5",
+        start_sync_datetime=datetime(2025, 5, 14, 00, 00, 0),
+        description="Test",
+        is_active=True
+    )
+
+    xorezm_config = OrderSyncConfig(
+        name="Хорезм дилер",
+        ms1_cp_id="b1af39d5-3df4-11ef-0a80-04a2001561ed",
+        ms2_organization_id="ede4cf84-726e-11ef-0a80-13bb002099d9",
+        ms2_group_id="8d6c723f-dc14-11ef-0a80-040f0022fd53",
+        ms2_store_id="9a936901-dc14-11ef-0a80-10cd0022a9b0",
+        start_sync_datetime=datetime(2025, 5, 14, 00, 00, 0),
+        description="Test",
+        is_active=True
+    )
+
+    db.add(surx_config)
+    db.add(xorezm_config)
+    db.commit()
+
+
 def seed_admin_user(db: Session, roles: dict) -> None:
     """Seed default admin user if it doesn't exist."""
     admin_username, admin_email, admin_password, admin_full_name = get_admin_credentials()
@@ -151,7 +181,8 @@ def seed_db() -> None:
     print("Starting database seeding...")
     db = SessionLocal()
     try:
-        # Seed in order: permissions -> roles -> admin user
+        print("Seeding order sync configs...")
+        seed_order_sync_configs(db)
         print("Seeding permissions...")
         permissions = seed_permissions(db)
         print("Seeding roles...")
@@ -167,4 +198,4 @@ def seed_db() -> None:
 
 
 if __name__ == "__main__":
-    seed_db() 
+    seed_db()
