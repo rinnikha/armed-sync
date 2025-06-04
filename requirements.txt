@@ -35,6 +35,7 @@ passlib==1.7.4
 pillow==11.2.1
 premailer==3.10.0
 prompt_toolkit==3.0.51
+psycopg2==2.9.10
 pyasn1==0.4.8
 pycparser==2.22
 pydantic==2.11.4
@@ -44,6 +45,7 @@ python-dateutil==2.9.0.post0
 python-dotenv==1.1.0
 python-jose==3.4.0
 python-multipart==0.0.20
+r-moysklad-api @ file:///Users/rinnikha/Documents/Development/moysklad_api
 redis==6.0.0
 reportlab==4.4.0
 requests==2.32.3
@@ -57,3 +59,5 @@ typing_extensions==4.13.2
 tzdata==2025.2
 urllib3==2.4.0
 uvicorn==0.34.2
+vine==5.1.0
+wcwidth==0.2.13

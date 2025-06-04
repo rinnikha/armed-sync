@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     MS_LOCAL_PACKAGE_PATH: str = os.getenv("MS_LOCAL_PACKAGE_PATH", "")
 
     # CORS
-    BACKEND_CORS_ORIGINS: List[AnyHttpUrl] = []
+    BACKEND_CORS_ORIGINS: list = ["http://localhost:3000", "http://localhost:8000"]
 
     @validator("BACKEND_CORS_ORIGINS", pre=True)
     def assemble_cors_origins(cls, v: Union[str, List[str]]) -> Union[List[str], str]:
