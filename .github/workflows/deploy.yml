@@ -1,0 +1,46 @@
+# .github/workflows/deploy.yml
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ main ]  # Only deploy from main branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Deploy to server
+      uses: appleboy/ssh-action@v0.1.5
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.SSH_KEY }}
+        script: |
+          echo "Starting deployment..."
+          cd /opt/armed-sync
+          
+          # Pull latest code
+          git pull origin main
+          
+          # Stop existing containers
+          docker-compose down
+          
+          # Remove old images to free space
+          docker image prune -f
+          
+          # Build and start new containers
+          docker-compose up -d --build
+          
+          # Wait for services to start
+          echo "Waiting for services to start..."
+          sleep 30
+          
+          # Simple health check
+          if curl -f http://localhost:8000/docs; then
+            echo "✅ Deployment successful - API is responding"
+          else
+            echo "❌ Deployment may have failed - API not responding"
+            docker-compose logs --tail=50
+            exit 1
+          fi
