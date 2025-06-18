@@ -119,10 +119,9 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
   }, [onChange, onSearchChange]);
 
   const handleOptionSelect = useCallback((option: MoyskladEntity) => {
-    console.log('Selected option:', option);
     onChange(option.id);
+    onSearchChange(option.name); // Set the search query to the selected option's name
     setIsOpen(false);
-    onSearchChange('');
   }, [onChange, onSearchChange]);
 
   const toggleDropdown = useCallback(() => {
@@ -141,7 +140,7 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
     );
   }, [isRemoteSearch, searchData, initialData, options, searchQuery, minSearchLength]);
 
-  // Update displayText to handle both local and remote search
+  // Get display text for selected value
   const displayText = useMemo(() => {
     if (!value) return placeholder;
     
@@ -149,13 +148,13 @@ const SearchableSelect: React.FC<SearchableSelectProps> = ({
     if (isRemoteSearch) {
       const selectedEntity = searchData.find((opt: MoyskladEntity) => opt.id === value) || 
                            initialData.find((opt: MoyskladEntity) => opt.id === value);
-      return selectedEntity ? selectedEntity.name : placeholder;
+      return selectedEntity ? selectedEntity.name : searchQuery || placeholder;
     }
     
     // For local search, check options
     const selectedEntity = options.find(opt => opt.id === value);
     return selectedEntity ? selectedEntity.name : placeholder;
-  }, [value, options, searchData, initialData, isRemoteSearch, placeholder]);
+  }, [value, options, searchData, initialData, isRemoteSearch, placeholder, searchQuery]);
 
   return (
     <div className={styles.formGroup}>
